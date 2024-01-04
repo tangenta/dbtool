@@ -20,22 +20,23 @@ func init() {
 }
 
 func runTestCmd(cmd *cobra.Command, args []string) {
+	cmd.SetUsageFunc(func(c *cobra.Command) error {
+		fmt.Println("Usage: \n  test [48304|50012|50073]")
+		return nil
+	})
 	if len(args) == 0 {
-		cmd.SetUsageFunc(func(c *cobra.Command) error {
-			fmt.Println("Usage: \n  test [48304]")
-			return nil
-		})
 		cmd.Usage()
 		return
 	}
 	switch args[0] {
 	case "48304":
 		cases.RunTest48304()
+	case "50012":
+		repeat := len(args) > 2 && args[1] == "repeat"
+		cases.RunTest50012(repeat)
 	case "50073":
-		// Precondition:
-		//   tiup playground nightly --db 2 --kv 1 --pd 1 --tiflash 0
 		cases.RunTest50073()
 	case "?":
-		fmt.Println("Usage: \n  test [48304]")
+		cmd.Usage()
 	}
 }

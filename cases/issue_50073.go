@@ -10,6 +10,10 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
+// https://github.com/pingcap/tidb/issues/50073.
+// Preconditions:
+//
+//	tiup playground nightly --db 2 --kv 1 --pd 1 --tiflash 0
 func RunTest50073() {
 	fmt.Println("Determine the owner of tidb...")
 	tidb1Addr := "root@tcp(127.0.0.1:4000)/test"
@@ -165,48 +169,6 @@ func ReadAll(rows *sql.Rows) [][]string {
 		panic(err)
 	}
 	return data
-}
-
-func testMultiStmtBug() {
-	db, err := sql.Open("mysql", "root@tcp(127.0.0.1:4000)/test")
-	mustNil(err)
-	defer db.Close()
-	ctx := context.Background()
-	conn, err := db.Conn(ctx)
-	mustNil(err)
-	defer conn.Close()
-	_, err = conn.ExecContext(ctx, "SET tidb_multi_statement_mode='ON';")
-	mustNil(err)
-	_, err = conn.ExecContext(ctx, "drop table if exists t;")
-	mustNil(err)
-	_, err = conn.ExecContext(ctx, `CREATE TABLE t (
-		a bigint(20),
-		b int(10),
-		PRIMARY KEY (b, a),
-		UNIQUE KEY uk_a (a)
-	  );
-	  `)
-	mustNil(err)
-
-	_, err = conn.ExecContext(ctx, `insert into t values (1, 1);`)
-	mustNil(err)
-
-	startTime := time.Now()
-	for {
-		if time.Since(startTime) >= 10*time.Minute {
-			break
-		}
-		_, err = conn.ExecContext(ctx, "begin;")
-		mustNil(err)
-		rs, err := conn.QueryContext(ctx, "update t set a = 2 where a = 1; select 1;")
-		mustNil(err)
-		ss := ReadAll(rs)
-		_ = ss
-		// printAll(rs)
-		_, err = conn.ExecContext(ctx, "rollback;")
-		mustNil(err)
-		time.Sleep(50 * time.Millisecond)
-	}
 }
 
 func printAll(rows *sql.Rows) {

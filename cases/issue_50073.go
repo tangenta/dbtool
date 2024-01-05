@@ -8,6 +8,7 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/tangenta/dbtool/util"
 )
 
 // https://github.com/pingcap/tidb/issues/50073.
@@ -23,7 +24,7 @@ func RunTest50073() {
 	mustNil(err)
 	rs, err := db.Query("select tidb_is_ddl_owner();")
 	mustNil(err)
-	ss := ReadAll(rs)
+	ss := util.ReadAll(rs)
 	db.Close()
 
 	if ss[0][0] == "0" {
@@ -31,15 +32,24 @@ func RunTest50073() {
 	}
 	fmt.Printf("Get tidb owner: %s\n", tidb1Addr)
 
-	fmt.Println("Prepare data...")
+	fmt.Println("Initialize environment...")
 	db1a, err := sql.Open("mysql", tidb1Addr)
 	mustNil(err)
 	defer db1a.Close()
+	db2, err := sql.Open("mysql", tidb2Addr)
+	mustNil(err)
+	defer db2.Close()
 
+	_, err = db1a.Exec("set tidb_enable_ddl = true;")
+	mustNil(err)
+	_, err = db2.Exec("set tidb_enable_ddl = true;")
+	mustNil(err)
 	_, err = db1a.Exec("set global tidb_ddl_enable_fast_reorg = 1;")
 	mustNil(err)
 	_, err = db1a.Exec("set global tidb_enable_dist_task = 1;")
 	mustNil(err)
+
+	fmt.Println("Prepare data...")
 	_, err = db1a.Exec("drop table if exists t;")
 	mustNil(err)
 	_, err = db1a.Exec("create table t (a int);")
@@ -72,9 +82,6 @@ func RunTest50073() {
 
 	// Evict back ddl owner from tidb-2 to tidb-1.
 	fmt.Println("Evict back DDL owner...")
-	db2, err := sql.Open("mysql", tidb2Addr)
-	mustNil(err)
-	defer db2.Close()
 	_, err = db2.Exec("set tidb_enable_ddl = false;")
 	mustNil(err)
 	_, err = db1a.Exec("set tidb_enable_ddl = true;")
@@ -84,7 +91,7 @@ func RunTest50073() {
 	<-time.After(3 * time.Second)
 	rs, err = db1a.Query("select tidb_is_ddl_owner();")
 	mustNil(err)
-	ss = ReadAll(rs)
+	ss = util.ReadAll(rs)
 	if ss[0][0] != "1" {
 		panic("ddl owner is not tidb-1")
 	}
@@ -112,7 +119,7 @@ func RunTest50073() {
 
 		rs, err = db1b.Query("admin show ddl jobs 1;")
 		mustNil(err)
-		ss = ReadAll(rs)
+		ss = util.ReadAll(rs)
 		jobID := ss[0][0]
 		fmt.Printf("Admin cancel ddl job(%s)...\n", jobID)
 		_, err = db1b.Exec(fmt.Sprintf("admin cancel ddl jobs %s;", jobID))
@@ -124,6 +131,12 @@ func RunTest50073() {
 	mustNil(err)
 	cancel()
 
+	// Clean up.
+	_, err = db1a.Exec("set tidb_enable_ddl = true;")
+	mustNil(err)
+	_, err = db2.Exec("set tidb_enable_ddl = true;")
+	mustNil(err)
+
 	fmt.Println("The test passed!")
 }
 
@@ -134,49 +147,8 @@ func mustNil(err error) {
 	}
 }
 
-func ReadAll(rows *sql.Rows) [][]string {
-	defer func() {
-		rows.Close()
-	}()
-
-	data := make([][]string, 0)
-	columns, err := rows.Columns()
-	if err != nil {
-		panic(err)
-	}
-	for rows.Next() {
-		row := make([]interface{}, len(columns))
-		scan := make([]interface{}, len(columns))
-		for i := range row {
-			scan[i] = &row[i]
-		}
-		err := rows.Scan(scan...)
-		if err != nil {
-			panic(err)
-		}
-
-		rowstr := make([]string, len(columns))
-		for i := range rowstr {
-			switch r := row[i].(type) {
-			case nil:
-				rowstr[i] = "NULL"
-			case []byte:
-				rowstr[i] = string(r)
-			default:
-				rowstr[i] = fmt.Sprintf("%v", row[i])
-			}
-		}
-		data = append(data, rowstr)
-	}
-	err = rows.Err()
-	if err != nil {
-		panic(err)
-	}
-	return data
-}
-
 func printAll(rows *sql.Rows) {
-	ss := ReadAll(rows)
+	ss := util.ReadAll(rows)
 	for _, s := range ss {
 		for _, v := range s {
 			fmt.Printf("%v ", v)

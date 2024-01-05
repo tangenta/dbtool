@@ -22,6 +22,7 @@ func RunTest48304() {
 		panic(err)
 	}
 	sqlz.MustExec(db, "set global tidb_ddl_enable_fast_reorg=on;")
+	sqlz.MustExec(db, "set global tidb_enable_dist_task=off;")
 	sqlz.MustExec(db, "drop table if exists t;")
 	sqlz.MustExec(db, "create table t(pk bigint primary key auto_increment, j json, i bigint, c char(64)) partition by hash(pk) PARTITIONS 10;")
 
@@ -36,10 +37,10 @@ func prepare(rg *randGen, db *sql.DB, cnt int) {
 	var buf bytes.Buffer
 	for i := 0; i < cnt; i++ {
 		insertSQL := fmt.Sprintf("insert into t(j, i, c) values (%s, %s, %s)", rg.randJSON(), rg.randNumber(buf), rg.randString(buf))
-		sqlz.MustExec(db, insertSQL)
-		// if i == 8423 {
-		// 	sqlz.MustExec(db, insertSQL)
-		// }
+		// sqlz.MustExec(db, insertSQL)
+		if i == 8423 {
+			sqlz.MustExec(db, insertSQL)
+		}
 	}
 }
 

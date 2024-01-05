@@ -36,6 +36,10 @@ func runTestCmd(cmd *cobra.Command, args []string) {
 		cases.RunTest50012(repeat)
 	case "50073":
 		cases.RunTest50073()
+	case "all":
+		cases.RunTest48304()
+		cases.RunTest50012(false)
+		cases.RunTest50073()
 	case "?":
 		cmd.Usage()
 	}

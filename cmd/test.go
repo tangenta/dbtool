@@ -21,7 +21,7 @@ func init() {
 
 func runTestCmd(cmd *cobra.Command, args []string) {
 	cmd.SetUsageFunc(func(c *cobra.Command) error {
-		fmt.Println("Usage: \n  test [48304|50012|50073]")
+		fmt.Println("Usage: \n  test [48304|50012|50073|all]")
 		return nil
 	})
 	if len(args) == 0 {
@@ -36,6 +36,8 @@ func runTestCmd(cmd *cobra.Command, args []string) {
 		cases.RunTest50012(repeat)
 	case "50073":
 		cases.RunTest50073()
+	case "50894":
+		cases.RunTest50894()
 	case "all":
 		cases.RunTest48304()
 		cases.RunTest50012(false)

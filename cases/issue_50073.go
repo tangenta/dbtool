@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"runtime/debug"
 	"sync"
 	"time"
 
@@ -142,7 +143,8 @@ func RunTest50073() {
 
 func mustNil(err error) {
 	if err != nil {
-		fmt.Printf("Panic error: %s\n", err.Error())
+		fmt.Printf("panic error: %s\n", err.Error())
+		debug.PrintStack()
 		panic(err)
 	}
 }

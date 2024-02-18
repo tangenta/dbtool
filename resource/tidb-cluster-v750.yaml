@@ -52,5 +52,10 @@ spec:
     service:
       type: ClusterIP
     requests:
-      cpu: "8"
+      cpu: "2000m"
+    limits:
+      cpu: "16000m"
+    env:
+    - name: GOMAXPROCS
+      value: "8"
     config: {}

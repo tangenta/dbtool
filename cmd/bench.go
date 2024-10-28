@@ -45,7 +45,7 @@ func init() {
 		Run: runBenchCmd(&bCtx),
 	}
 	benchCmd.Flags().StringVar(&bCtx.kubeCfgPath, "kubecfg", "./kubeconfig.yml", "Set the path of kube config file.")
-	benchCmd.Flags().StringVar(&bCtx.tidbNamespace, "namespace", "tidb-cluster", "Set the namespace of TiDB cluster.")
+	benchCmd.Flags().StringVar(&bCtx.tidbNamespace, "namespace", "", "Set the namespace of TiDB cluster.")
 	benchCmd.Flags().StringVar(&bCtx.dataset, "dataset", "sysbench", "Set the dataset to prepare.")
 	benchCmd.Flags().StringVar(&bCtx.tableCount, "tables", "1", "Set the table count of dataset.")
 	benchCmd.Flags().StringVar(&bCtx.rowCount, "rows", "100", "Set the row count of dataset.")
@@ -86,6 +86,7 @@ func runBenchCmd(d *benchCtx) func(cmd *cobra.Command, args []string) {
 func (b *benchCtx) init() {
 	b.validateAndFillArgs()
 	b.buildClientSetFromCfg()
+	b.detectNamespace()
 	b.detectClusterInfo()
 }
 
@@ -101,6 +102,30 @@ func (b *benchCtx) buildClientSetFromCfg() {
 	}
 	b.clientset = clientset
 	log.Println("Build clientset from kube config success.")
+}
+
+func (b *benchCtx) detectNamespace() {
+	if b.tidbNamespace != "" {
+		log.Printf("Use specified namespace: %s\n", b.tidbNamespace)
+		return
+	}
+	log.Println("Namespace is not specified, use current context namespace...")
+	apiCfg := clientcmd.GetConfigFromFileOrDie(b.kubeCfgPath)
+	b.tidbNamespace = apiCfg.Contexts[apiCfg.CurrentContext].Namespace
+	if b.tidbNamespace != "" {
+		log.Printf("Use current context namespace: %s\n", b.tidbNamespace)
+		return
+	}
+	log.Println("Namespace is not specified, detecting namespace...")
+	ns, err := b.clientset.CoreV1().Namespaces().List(context.Background(), metav1.ListOptions{})
+	if err != nil {
+		panic(err)
+	}
+	if len(ns.Items) != 1 {
+		panic("namespace is not specified and there are multiple namespaces.")
+	}
+	b.tidbNamespace = ns.Items[0].Name
+	log.Printf("Detected namespace: %s\n", b.tidbNamespace)
 }
 
 func (b *benchCtx) detectClusterInfo() {

@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -27,6 +28,8 @@ type benchCtx struct {
 	kubeCfgPath   string
 	tidbNamespace string
 	dataset       string
+	tableCount    string
+	tableCountInt int
 	rowCount      string
 
 	clientset *kubernetes.Clientset
@@ -44,6 +47,7 @@ func init() {
 	benchCmd.Flags().StringVar(&bCtx.kubeCfgPath, "kubecfg", "./kubeconfig.yml", "Set the path of kube config file.")
 	benchCmd.Flags().StringVar(&bCtx.tidbNamespace, "namespace", "tidb-cluster", "Set the namespace of TiDB cluster.")
 	benchCmd.Flags().StringVar(&bCtx.dataset, "dataset", "sysbench", "Set the dataset to prepare.")
+	benchCmd.Flags().StringVar(&bCtx.tableCount, "tables", "1", "Set the table count of dataset.")
 	benchCmd.Flags().StringVar(&bCtx.rowCount, "rows", "100", "Set the row count of dataset.")
 	rootCmd.AddCommand(benchCmd)
 }
@@ -71,7 +75,8 @@ func runBenchCmd(d *benchCtx) func(cmd *cobra.Command, args []string) {
 		switch d.dataset {
 		case "sysbench":
 			d.sysbenchPrepare()
-			d.benchCreateIndex()
+			d.benchCreateMultiIndexes()
+			// d.benchCreateIndex()
 		default:
 			panic(fmt.Sprintf("unsupported dataset: %s", d.dataset))
 		}
@@ -79,6 +84,7 @@ func runBenchCmd(d *benchCtx) func(cmd *cobra.Command, args []string) {
 }
 
 func (b *benchCtx) init() {
+	b.validateAndFillArgs()
 	b.buildClientSetFromCfg()
 	b.detectClusterInfo()
 }
@@ -114,6 +120,15 @@ func (b *benchCtx) detectClusterInfo() {
 	}
 	b.tidbSVC = tidbSvc
 	log.Printf("Get TiDB service name: %s\n", tidbSvc)
+}
+
+func (b *benchCtx) validateAndFillArgs() {
+	// Convert tableCount to tableCountInt
+	tableCountInt, err := strconv.Atoi(b.tableCount)
+	if err != nil {
+		panic(err)
+	}
+	b.tableCountInt = tableCountInt
 }
 
 func (b *benchCtx) deployBenchTool() {
@@ -156,9 +171,9 @@ func (b *benchCtx) sysbenchPrepare() {
 	fmt.Print(ret)
 	ret = b.executeSQLInTestDB("select count(1) from sbtest1;")
 	if strings.Contains(ret, "doesn't exist") {
-		command := "sysbench --test=oltp_read_write --table-size=%s --db-driver=mysql --mysql-user=root " +
+		command := "sysbench --test=oltp_read_write --tables=%s --table-size=%s --db-driver=mysql --mysql-user=root " +
 			"--mysql-password='' --mysql-host=%s --mysql-port=4000 --mysql-db=test --threads=4 --mysql-ignore-errors=8028 prepare"
-		command = fmt.Sprintf(command, b.rowCount, b.tidbSVC)
+		command = fmt.Sprintf(command, b.tableCount, b.rowCount, b.tidbSVC)
 		ret = b.execCmdOnPod(command)
 		fmt.Print(ret)
 	} else {
@@ -192,6 +207,22 @@ func (b *benchCtx) benchCreateIndex() {
 	startEnd := extractSQLResult(ret, 0, 9, 10)
 	elapseTime := calculateElapseTime(startEnd[0], startEnd[1])
 	log.Printf("Create index elapse time: %s\n", elapseTime.String())
+}
+
+func (b *benchCtx) benchCreateMultiIndexes() {
+	var wg sync.WaitGroup
+	wg.Add(b.tableCountInt)
+	startTime := time.Now()
+	log.Printf("Create multiple indexes begin time: %s\n", startTime.String())
+	for i := 0; i < b.tableCountInt; i++ {
+		go func(i int) {
+			defer wg.Done()
+			ret := b.executeSQLInTestDB(fmt.Sprintf("create index idx on sbtest%d(c);", i+1))
+			fmt.Print(ret)
+		}(i)
+	}
+	wg.Wait()
+	log.Printf("Create multiple indexes elapse: %s\n", time.Since(startTime).String())
 }
 
 func calculateElapseTime(start, end string) time.Duration {

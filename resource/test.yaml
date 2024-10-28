@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test
+spec:
+  containers:
+  - name: tester
+    image: golang:1.21
+    args:
+      - bash
+      - -c
+      - |
+        cat <<EOF > /tmp/code.go
+        package main
+
+        import (
+          "fmt"
+          "runtime"
+          "runtime/debug"
+        )
+
+        func main() {
+          fmt.Printf("GOMAXPROCS: %d\n", runtime.GOMAXPROCS(0))
+          fmt.Printf("GOMEMLIMIT: %d\n", debug.SetMemoryLimit(-1))
+        }
+        EOF
+        go run /tmp/code.go        
+    resources:
+      limits:
+        cpu: 3000m
+        memory: 1500M
+    env:
+    - name: GOMEMLIMIT
+      valueFrom:
+        resourceFieldRef:
+          resource: limits.memory
+    - name: GOMAXPROCS
+      valueFrom:
+        resourceFieldRef:
+          resource: limits.cpu

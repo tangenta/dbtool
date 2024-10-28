@@ -38,6 +38,8 @@ func runTestCmd(cmd *cobra.Command, args []string) {
 		cases.RunTest50073()
 	case "50894":
 		cases.RunTest50894()
+	case "50895":
+		cases.RunTest50895()
 	case "all":
 		cases.RunTest48304()
 		cases.RunTest50012(false)

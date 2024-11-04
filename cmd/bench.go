@@ -192,12 +192,14 @@ func (b *benchCtx) executeSQL(sql string) string {
 }
 
 func (b *benchCtx) sysbenchPrepare() {
-	ret := b.executeSQL("create database if not exists test;")
+	ret := b.executeSQL("drop database if exists test;")
+	fmt.Print(ret)
+	ret = b.executeSQL("create database if not exists test;")
 	fmt.Print(ret)
 	ret = b.executeSQLInTestDB("select count(1) from sbtest1;")
 	if strings.Contains(ret, "doesn't exist") {
 		command := "sysbench --test=oltp_read_write --tables=%s --table-size=%s --db-driver=mysql --mysql-user=root " +
-			"--mysql-password='' --mysql-host=%s --mysql-port=4000 --mysql-db=test --threads=4 --mysql-ignore-errors=8028 prepare"
+			"--mysql-password='' --mysql-host=%s --mysql-port=4000 --mysql-db=test --threads=4 --mysql-ignore-errors=8028 --create_secondary=off prepare"
 		command = fmt.Sprintf(command, b.tableCount, b.rowCount, b.tidbSVC)
 		ret = b.execCmdOnPod(command)
 		fmt.Print(ret)

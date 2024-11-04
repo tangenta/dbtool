@@ -11,7 +11,7 @@
             "mode": "auto",
             "program": "main.go",
             "args": [
-                "bench", "sysbench", "--tables=10", "--rows=10",
+                "bench", "sysbench", "--tables=100", "--rows=10000",
             ]
         }
     ]

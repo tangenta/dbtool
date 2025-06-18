@@ -1,6 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 kubectl create namespace tidb-cluster
+kubectl config set-context --current --namespace="tidb-cluster"
 kubectl -n tidb-cluster apply -f resource/tidb-cluster-nightly-perf.yaml
 kubectl -n tidb-cluster apply -f resource/tidb-monitor.yaml
 kubectl -n tidb-cluster wait --for=condition=Ready --timeout=300s tc/tc

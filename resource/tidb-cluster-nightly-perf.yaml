@@ -6,7 +6,7 @@ kind: TidbCluster
 metadata:
   name: tc
 spec:
-  version: nightly
+  version: latest
   timezone: UTC
   pvReclaimPolicy: Retain
   enableDynamicConfiguration: true

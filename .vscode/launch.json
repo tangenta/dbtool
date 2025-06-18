@@ -13,6 +13,16 @@
             "args": [
                 "bench", "sysbench", "--tables=100", "--rows=10000",
             ]
+        },
+        {
+            "name": "Run Precheck",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "main.go",
+            "args": [
+                "precheck", "./bin/precheck.sql",
+            ]
         }
     ]
 }

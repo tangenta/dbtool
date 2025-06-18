@@ -21,7 +21,7 @@
             "mode": "auto",
             "program": "main.go",
             "args": [
-                "precheck", "./bin/precheck.sql",
+                "precheck", "-f", "./bin/precheck.sql",
             ]
         }
     ]

@@ -13,9 +13,12 @@ import (
 	"github.com/pingcap/tidb/pkg/parser/ast"
 	"github.com/pingcap/tidb/pkg/parser/format"
 	_ "github.com/pingcap/tidb/pkg/planner/core"
+	"github.com/pingcap/tidb/pkg/planner/core/resolve"
 	_ "github.com/pingcap/tidb/pkg/types/parser_driver"
+	"github.com/pingcap/tidb/pkg/util/chunk"
 	"github.com/pingcap/tidb/pkg/util/collate"
 	"github.com/pingcap/tidb/pkg/util/mock"
+	"github.com/pingcap/tidb/pkg/util/sqlexec"
 	"github.com/spf13/cobra"
 )
 
@@ -68,7 +71,7 @@ func precheckSQLFile(ctx *precheckCtx) {
 
 	collate.SetNewCollationEnabledForTest(ctx.collationEnabled)
 	tracker := schematracker.NewSchemaTracker(0)
-	sessCtx := mock.NewContext()
+	sessCtx := &mockCtx{mock.NewContext()}
 	isLossyChange := false
 	for _, stmt := range stmts {
 		isAlterTable := false
@@ -143,4 +146,21 @@ func printErrAndExit(err error) {
 		fmt.Printf("Error: %s\n", err)
 		os.Exit(1)
 	}
+}
+
+type mockCtx struct {
+	*mock.Context
+}
+
+func (m *mockCtx) GetRestrictedSQLExecutor() sqlexec.RestrictedSQLExecutor {
+	return m
+}
+
+func (m *mockCtx) ExecRestrictedSQL(
+	ctx context.Context,
+	opts []sqlexec.OptionFuncAlias,
+	sql string,
+	args ...any,
+) ([]chunk.Row, []*resolve.ResultField, error) {
+	return nil, nil, nil
 }

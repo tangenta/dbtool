@@ -23,6 +23,22 @@
             "args": [
                 "precheck", "-f", "./bin/precheck.sql",
             ]
+        },
+        {
+            "name": "Run Metacli",
+            "type": "go",
+            "request": "launch",
+            "mode": "auto",
+            "program": "main.go",
+            "args": [
+                "metacli", 
+                "--config", "/home/tangenta/tidb/pkg/config/config.toml.example",
+                "--store", "tikv",
+                "--path", "127.0.0.1:2379",
+                "--op", "get",
+                "--key", "max-ingest-inflight",
+                "--value", "16",
+            ]
         }
     ]
 }

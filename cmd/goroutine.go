@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// testCmd represents the testCmd command
+// goroutineCmd represents the goroutineCmd command
 var goroutineCmd = &cobra.Command{
 	Use:   "goroutine",
 	Short: "display goroutines of a TiDB process",

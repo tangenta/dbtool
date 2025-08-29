@@ -86,7 +86,7 @@ func precheckSQLFile(ctx *precheckCtx) {
 			isAlterTable = true
 			err := tracker.AlterTable(context.Background(), sessCtx, v)
 			printErrAndExit(err)
-			isLossyChange = tracker.Job.CtxVars[0].(bool)
+			// isLossyChange = tracker.Job.CtxVars[0].(bool)
 		default:
 			printErrAndExit(fmt.Errorf("Unsupported statement type: %T", v))
 		}

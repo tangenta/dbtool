@@ -210,4 +210,4 @@ replace github.com/go-ldap/ldap/v3 => github.com/YangKeao/ldap/v3 v3.4.5-0.20230
 
 replace github.com/pingcap/tidb/pkg/parser => github.com/tangenta/tidb/pkg/parser v0.0.0-20250618064758-0d17b62acc7e
 
-replace github.com/pingcap/tidb => github.com/tangenta/tidb v1.1.0-beta.0.20250618064758-0d17b62acc7e
+replace github.com/pingcap/tidb => github.com/fzzf678/tidb v1.1.0-beta.0.20251110042712-696ef980e7c9

@@ -208,6 +208,8 @@ github.com/fsnotify/fsnotify v1.7.0/go.mod h1:40Bi/Hjc2AVfZrqy+aj+yEI+/bRxZnMJyT
 github.com/fsouza/fake-gcs-server v1.44.0 h1:Lw/mrvs45AfCUPVpry6qFkZnZPqe9thpLQHW+ZwHRLs=
 github.com/fsouza/fake-gcs-server v1.44.0/go.mod h1:M02aKoTv9Tnlf+gmWnTok1PWVCUHDntVbHxpd0krTfo=
 github.com/fzipp/gocyclo v0.3.1/go.mod h1:DJHO6AUmbdqj2ET4Z9iArSuwWgYDRryYt2wASxc7x3E=
+github.com/fzzf678/tidb v1.1.0-beta.0.20251110042712-696ef980e7c9 h1:gNlrpJk328Lh1ZnZzPBUGdF8Ac1PXfXXsUpjyT9mnPQ=
+github.com/fzzf678/tidb v1.1.0-beta.0.20251110042712-696ef980e7c9/go.mod h1:Z5/ps9JLa2rIVSzoEXt5adSzYhqVh/LxXaaH+uU+9R4=
 github.com/getsentry/sentry-go v0.27.0 h1:Pv98CIbtB3LkMWmXi4Joa5OOcwbmnX88sF5qbK3r3Ps=
 github.com/getsentry/sentry-go v0.27.0/go.mod h1:lc76E2QywIyW8WuBnwl8Lc4bkmQH4+w1gwTf25trprY=
 github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
@@ -652,8 +654,6 @@ github.com/stretchr/testify v1.8.0/go.mod h1:yNjHg4UonilssWZ8iaSj1OCr/vHnekPRkoO
 github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
 github.com/stretchr/testify v1.10.0 h1:Xv5erBjTwe/5IxqUQTdXv5kgmIvbHo3QQyRwhJsOfJA=
 github.com/stretchr/testify v1.10.0/go.mod h1:r2ic/lqez/lEtzL7wO/rwa5dbSLXVDPFyf8C91i36aY=
-github.com/tangenta/tidb v1.1.0-beta.0.20250618064758-0d17b62acc7e h1:M+T/682AVJY++Omfwff45K2RxuaT955kYFXnwciE1+s=
-github.com/tangenta/tidb v1.1.0-beta.0.20250618064758-0d17b62acc7e/go.mod h1:Z5/ps9JLa2rIVSzoEXt5adSzYhqVh/LxXaaH+uU+9R4=
 github.com/tangenta/tidb/pkg/parser v0.0.0-20250618064758-0d17b62acc7e h1:foBozT3UrfWJSwcMy1TxtnMeQLpTylEyrxww4/0rHQ0=
 github.com/tangenta/tidb/pkg/parser v0.0.0-20250618064758-0d17b62acc7e/go.mod h1:+8feuexTKcXHZF/dkDfvCwEyBAmgb4paFc3/WeYV2eE=
 github.com/tiancaiamao/appdash v0.0.0-20181126055449-889f96f722a2 h1:mbAskLJ0oJfDRtkanvQPiooDH8HvJ2FBh+iKT/OmiQQ=

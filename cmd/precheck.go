@@ -9,9 +9,12 @@ import (
 
 	"github.com/pingcap/log"
 	"github.com/pingcap/tidb/pkg/ddl/schematracker"
+	"github.com/pingcap/tidb/pkg/meta/model"
 	"github.com/pingcap/tidb/pkg/parser"
 	"github.com/pingcap/tidb/pkg/parser/ast"
 	"github.com/pingcap/tidb/pkg/parser/format"
+	"github.com/pingcap/tidb/pkg/parser/mysql"
+	"github.com/pingcap/tidb/pkg/parser/types"
 	_ "github.com/pingcap/tidb/pkg/planner/core"
 	"github.com/pingcap/tidb/pkg/planner/core/resolve"
 	_ "github.com/pingcap/tidb/pkg/types/parser_driver"
@@ -75,6 +78,7 @@ func precheckSQLFile(ctx *precheckCtx) {
 	isLossyChange := false
 	for _, stmt := range stmts {
 		isAlterTable := false
+		isOptimized := false
 		switch v := stmt.(type) {
 		case *ast.CreateDatabaseStmt:
 			err := tracker.CreateSchema(sessCtx, v)
@@ -87,6 +91,7 @@ func precheckSQLFile(ctx *precheckCtx) {
 			err := tracker.AlterTable(context.Background(), sessCtx, v)
 			printErrAndExit(err)
 			isLossyChange = tracker.Job.CtxVars[0].(bool)
+			isOptimized = checkIfOptimized(tracker.OldColInfo, tracker.NewColInfo)
 		default:
 			printErrAndExit(fmt.Errorf("Unsupported statement type: %T", v))
 		}
@@ -95,7 +100,7 @@ func precheckSQLFile(ctx *precheckCtx) {
 			stmt.Restore(format.NewRestoreCtx(format.DefaultRestoreFlags, &builder))
 			fmt.Printf("Ok: %v\n", builder.String())
 			if isAlterTable {
-				fmt.Printf("Lossy change: %v\n", isLossyChange)
+				fmt.Printf("Lossy change: %v, Whether optimized in v8.5.4: %v \n", isLossyChange, isOptimized)
 			}
 		}
 	}
@@ -163,4 +168,45 @@ func (m *mockCtx) ExecRestrictedSQL(
 	args ...any,
 ) ([]chunk.Row, []*resolve.ResultField, error) {
 	return nil, nil, nil
+}
+
+var integerByteLen = map[byte]int{
+	mysql.TypeTiny:     1, //"tinyint",
+	mysql.TypeShort:    2, //"smallint",
+	mysql.TypeInt24:    3, //"mediumint",
+	mysql.TypeLong:     4, //"int",
+	mysql.TypeLonglong: 8, //"bigint",
+}
+
+func checkIfOptimized(old, new *model.ColumnInfo) bool {
+	// integer
+	if mysql.IsIntegerType(old.GetType()) && mysql.IsIntegerType(new.GetType()) {
+		return checkInteger(old, new)
+	}
+	// string
+	if types.IsTypeChar(old.GetType()) && types.IsTypeChar(new.GetType()) {
+		if old.GetType() == new.GetType() {
+			return old.GetFlen() > new.GetFlen() // only same type and widen length is not optimized
+		}
+		return true
+	}
+	return false
+}
+
+func checkInteger(old, new *model.ColumnInfo) bool {
+	oldLen := integerByteLen[old.GetType()]
+	newLen := integerByteLen[new.GetType()]
+	oldColUnsigned := mysql.HasUnsignedFlag(old.GetFlag())
+	newColUnsigned := mysql.HasUnsignedFlag(new.GetFlag())
+
+	if !oldColUnsigned && !newColUnsigned { // signed to signed
+		return oldLen > newLen
+	} else if !oldColUnsigned && newColUnsigned { // signed to unsigned
+		return true
+	} else if oldColUnsigned && !newColUnsigned { // unsigned to signed
+		return oldLen >= newLen
+	} else { // unsigned to unsigned
+		return oldLen > newLen
+	}
+	return false
 }

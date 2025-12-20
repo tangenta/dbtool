@@ -3,14 +3,14 @@ kind: Pod
 metadata:
   labels:
     app: ubuntu
-  name: ubuntu
+  name: ubuntu-1
 spec:
-  nodeSelector:
-    nodegroup: default-n2-standard-64
-  tolerations: [{key: nodegroup, operator: Equal, value: default-n2-standard-64, effect: NoSchedule}]
+  # nodeSelector:
+  #   nodegroup: default-n2-standard-64
+  # tolerations: [{key: nodegroup, operator: Equal, value: default-n2-standard-64, effect: NoSchedule}]
   containers:
   - image: ubuntu:22.04
     imagePullPolicy: Always
-    name: ubuntu
+    name: ubuntu-1
     command: ["tail"]
     args: ["-f", "/dev/null"]

@@ -115,6 +115,7 @@ func metaCliConfigIsValid(ctx *metaCliCtx) bool {
 			fmt.Printf("invalid value %s for key %s\n", ctx.value, ctx.key)
 			return false
 		}
+		val = float64(v)
 	default:
 		fmt.Printf("invalid operation type %s\n", ctx.opType)
 		return false

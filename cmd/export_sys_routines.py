@@ -101,7 +101,7 @@ def export_routines(host='127.0.0.1', port=3306, user='root', password='', outpu
                 print(f"Skipping {routine_type}: {routine_name} (prefix 'ps_')")
                 continue
             # Skip specific routine names
-            if routine_name in {"diagnostics", "statement_performance_analyzer", "sys_get_config", "execute_prepared_stmt", "create_synonym_db"}:
+            if routine_name in {"diagnostics", "statement_performance_analyzer", "sys_get_config", "execute_prepared_stmt", "create_synonym_db", "format_statement"}:
                 print(f"Skipping {routine_type}: {routine_name} (excluded by name)")
                 continue
             print(f"Exporting {routine_type}: {routine_name}")
